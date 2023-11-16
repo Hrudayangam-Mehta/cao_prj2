@@ -311,6 +311,8 @@ APEX_fetch(APEX_CPU *cpu)
    
 
             int btb_index = search_entry_in_btb(cpu, cpu->pc);
+        
+        // added btb_index_2 for the second entry in the BTB
 
             int btb_index_2 = search_entry_in_btb(cpu, cpu->pc + 4);
             
