@@ -75,6 +75,6 @@
 #define ENABLE_DEBUG_MESSAGES 1
 
 /* Set this flag to 1 to enable cycle single-step mode */
-#define ENABLE_SINGLE_STEP 1
+#define ENABLE_SINGLE_STEP 0
 
 #endif

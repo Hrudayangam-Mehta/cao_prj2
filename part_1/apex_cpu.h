@@ -83,4 +83,5 @@ APEX_Instruction *create_code_memory(const char *filename, int *size);
 APEX_CPU *APEX_cpu_init(const char *filename);
 void APEX_cpu_run(APEX_CPU *cpu);
 void APEX_cpu_stop(APEX_CPU *cpu);
+void APEX_cpu_simulate(APEX_CPU *cpu, int cycles,const char *filename);
 #endif

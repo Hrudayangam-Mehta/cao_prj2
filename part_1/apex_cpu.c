@@ -18,6 +18,7 @@ CPU_Stage outputDisplay[5];
 char stages[5][20] = { "FETCH_ ","DECODE_RF_","EX_","MEMORY_","WRITEBACK_"};
 
 
+
 /* Converts the PC(4000 series) into array index for code memory
  *
  * Note: You are not supposed to edit this function
@@ -1716,6 +1717,22 @@ APEX_cpu_init(const char *filename)
     return cpu;
 }
 
+
+void displaySequence()
+{ printf("\n");
+    for(int i = 0; i < 5; i++)
+    {
+        if(outputDisplay[i].has_insn){
+            printf("\n");
+            printf("%d.  %-15s--->: (l%d: %d) ",i+1, stages[i], (outputDisplay[i].rd>0 ? outputDisplay[i].rd:0),outputDisplay[i].pc);
+            print_instruction(&outputDisplay[i]);
+            printf("\n");
+        } else{
+            printf("%d.   %-15s--->:   NA \n",i+1, stages[i]);
+        }
+    }
+}
+
 /*
  * APEX CPU simulation loop
  *
@@ -1774,20 +1791,7 @@ printf("\n");
     }
 }
 
-void displaySequence()
-{ printf("\n");
-    for(int i = 0; i < 5; i++)
-    {
-        if(outputDisplay[i].has_insn){
-            printf("\n");
-            printf("%d.  %-15s--->: (l%d: %d) ",i+1, stages[i], (outputDisplay[i].rd>0 ? outputDisplay[i].rd:0),outputDisplay[i].pc);
-            print_instruction(&outputDisplay[i]);
-            printf("\n");
-        } else{
-            printf("%d.   %-15s--->:   NA \n",i+1, stages[i]);
-        }
-    }
-}
+
 
 void Registers_state(APEX_CPU* cpu) {
   printf("\n== STATE REGISTER FILE ====\n");

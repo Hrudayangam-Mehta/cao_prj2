@@ -54,7 +54,7 @@ main(int argc, char const *argv[])
         fprintf(stderr, "APEX_Error: Unable to initialize CPU\n");
         exit(1);
     }
-    if(argc>2 & argc == 4)
+    if( argc>2 && argc == 4)
     {
         
         APEX_cpu_simulate(cpu,atoi(argv[3]),argv[2]);
