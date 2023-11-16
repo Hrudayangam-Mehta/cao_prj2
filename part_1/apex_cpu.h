@@ -125,8 +125,8 @@ void APEX_cpu_simulate(APEX_CPU *cpu, int cycles,const char *filename);
 int search_entry_in_btb(APEX_CPU *cpu, int instruction_addr);
 void initialize_btb(APEX_CPU *cpu);
 
-int change_btb_11(int current_bits);
-int change_btb_00(int current_bits);
+int change_btb_2(int current_bits);
+int change_btb_0(int current_bits);
 
 void update_branch_BP_BNZ(APEX_CPU* cpu);
 void update_branch_BZ_BNP(APEX_CPU* cpu);

@@ -316,8 +316,8 @@ APEX_fetch(APEX_CPU *cpu)
                 if( (cpu->fetch.opcode == OPCODE_BNZ || cpu->fetch.opcode == OPCODE_BP) && cpu->BTB_array[btb_index].outcome_bit != 0 ){
                     cpu->pc = cpu->BTB_array[btb_index].calc_target_address;
                 }
-                // Check if the opcode is BZ or BNP and the outcome bit is 11
-                else if((cpu->fetch.opcode == OPCODE_BZ || cpu->fetch.opcode == OPCODE_BNP) && cpu->BTB_array[btb_index].outcome_bit == 11 ){
+                // Check if the opcode is BZ or BNP and the outcome bit is 2
+                else if((cpu->fetch.opcode == OPCODE_BZ || cpu->fetch.opcode == OPCODE_BNP) && cpu->BTB_array[btb_index].outcome_bit == 2 ){
                     cpu->pc = cpu->BTB_array[btb_index].calc_target_address;
                 }
                 else{
@@ -701,7 +701,7 @@ APEX_decode(APEX_CPU *cpu)
                     update_btb_entry(cpu, cpu->decode.pc,-1);
                     btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
                     // cpu->BTB_array[btb_index].outcome_bit = 0;
-                    cpu->BTB_array[btb_index].outcome_bit = 11;
+                    cpu->BTB_array[btb_index].outcome_bit = 2;
                     
                     cpu->BTB_array[btb_index].completion_status = 0;
                     // cpu->BTB_array[btb_index].calc_target_address = cpu->decode.pc + cpu->decode.imm;
@@ -719,7 +719,7 @@ APEX_decode(APEX_CPU *cpu)
                     update_btb_entry(cpu, cpu->decode.pc,-1);
                     btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
                     // cpu->BTB_array[btb_index].outcome_bit = 0;
-                    cpu->BTB_array[btb_index].outcome_bit = 11;
+                    cpu->BTB_array[btb_index].outcome_bit = 2;
                     
                     cpu->BTB_array[btb_index].completion_status = 0;
                     // cpu->BTB_array[btb_index].calc_target_address = cpu->decode.pc + cpu->decode.imm;
@@ -738,7 +738,7 @@ APEX_decode(APEX_CPU *cpu)
                     update_btb_entry(cpu, cpu->decode.pc,-1);
                     btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
                     // cpu->BTB_array[btb_index].outcome_bit = 0;
-                    cpu->BTB_array[btb_index].outcome_bit = 00;
+                    cpu->BTB_array[btb_index].outcome_bit = 0;
                     
                     cpu->BTB_array[btb_index].completion_status = 0;
                     // cpu->BTB_array[btb_index].calc_target_address = cpu->decode.pc + cpu->decode.imm;
@@ -754,7 +754,7 @@ APEX_decode(APEX_CPU *cpu)
                     update_btb_entry(cpu, cpu->decode.pc,-1);
                     btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
                     // cpu->BTB_array[btb_index].outcome_bit = 0;
-                    cpu->BTB_array[btb_index].outcome_bit = 00;
+                    cpu->BTB_array[btb_index].outcome_bit = 0;
                     
                     cpu->BTB_array[btb_index].completion_status = 0;
                     // cpu->BTB_array[btb_index].calc_target_address = cpu->decode.pc + cpu->decode.imm;
@@ -1221,7 +1221,7 @@ APEX_execute(APEX_CPU *cpu)
                     update_branch_BP_BNZ(cpu);
                 }
 
-                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 00)
+                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 0)
                 {
 
                     /* Calculate new PC, and send it to fetch unit */
@@ -1250,7 +1250,7 @@ APEX_execute(APEX_CPU *cpu)
                     update_branch_BZ_BNP(cpu);
                 }
 
-                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 11)
+                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 2)
                 {
                     /* Calculate new PC, and send it to fetch unit */
                     cpu->pc = cpu->execute.pc + cpu->execute.imm;
@@ -1280,9 +1280,9 @@ APEX_execute(APEX_CPU *cpu)
 
 
                 //   or flush
-            // else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 11)
+            // else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 2)
             
-            else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit != 00)
+            else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit != 0)
                 {
                     /* Calculate new PC, and send it to fetch unit */
                     cpu->pc = cpu->execute.pc +4;
@@ -1310,7 +1310,7 @@ APEX_execute(APEX_CPU *cpu)
                     update_branch_BZ_BNP(cpu);
                 }
 
-                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 11){
+                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 2){
 
                 
 
@@ -2091,53 +2091,33 @@ void update_btb_entry(APEX_CPU *cpu, int instruction_addr, int calc_target_addre
 }
 
 
-// increment/change btb entry to 11 
-int change_btb_11(int current_bits)
+// increment/change btb entry to 2 
+int change_btb_2(int current_bits)
 {
     if(current_bits == 0){
         return 1;
     }
-    // for the rest of the cases change it to 11
+    // for the rest of the cases change it to 2
 
-    return 11;
+    return 2;
 }
 
-// increment/change btb entry to 00
-int change_btb_00(int current_bits)
+// increment/change btb entry to 0
+int change_btb_0(int current_bits)
 {
-    if(current_bits == 11){
-        return 01;
+    if(current_bits == 2){
+        return 1;
     }
-    // for the rest of the cases change it to 00
-    //printf("change_btb_00 - changing to 00\n");
-    //printf("reached change btbt 00\n");
-    // return 00;
+    // for the rest of the cases change it to 0
+    //printf("change_btb_0 - changing to 0\n");
+    //printf("reached change btbt 0\n");
+    // return 0;
     return 0;
 
 }
 
 // code for BP_BNZ
 
-//logic 
-/*
-
-possible scenarios:- from updated P2 pdf - using Mintify (commenting ai)
-
-If the instruction is a branch:
-
-1) If the entry is unresolved, flush it and mark as resolved.
-2) If the bits are 00 and the entry is incorrect, reinitialize the entry.
-
-   If the entry is correct, increment the bits and flush.
-
-3) If the bits are 01 or 11 and the entry is incorrect, decrement and flush.
-   If the entry is correct, increment.
-
-If the instruction is not a branch:
-- If the bits are 11 or 01 and the entry is resolved, flush and adjust counters.
-- Otherwise, take no action.
-
-*/
 
 void update_branch_BP_BNZ(APEX_CPU* cpu)
 {
@@ -2146,14 +2126,14 @@ void update_branch_BP_BNZ(APEX_CPU* cpu)
     // Search for the entry in the BTB
     int btb_index = search_entry_in_btb(cpu, cpu->execute.pc);
 
-    // Check if the BTB entry is unresolved or if it's resolved but the calculated address doesn't match and the outcome bit is 00
-    if (cpu->BTB_array[btb_index].completion_status == 0 || (cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit == 00)){
+    // Check if the BTB entry is unresolved or if it's resolved but the calculated address doesn't match and the outcome bit is 0
+    if (cpu->BTB_array[btb_index].completion_status == 0 || (cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit == 0)){
         // Update the BTB entry
         cpu->BTB_array[btb_index].completion_status = 1;
         cpu->BTB_array[btb_index].calc_target_address = target_address;
-        cpu->BTB_array[btb_index].outcome_bit = 11;
+        cpu->BTB_array[btb_index].outcome_bit = 2;
 
-        // cpu->BTB_array[btb_index].outcome_bit = change_btb_11(cpu->BTB_array[btb_index].outcome_bit);
+        // cpu->BTB_array[btb_index].outcome_bit = change_btb_2(cpu->BTB_array[btb_index].outcome_bit);
 
         cpu->pc = target_address;
 
@@ -2164,10 +2144,10 @@ void update_branch_BP_BNZ(APEX_CPU* cpu)
 
         cpu->fetch.has_insn = TRUE;
     }
-    // Check if the BTB entry is resolved, the calculated address matches and the outcome bit is 00
-    else if (cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address == target_address && cpu->BTB_array[btb_index].outcome_bit == 00  ){
+    // Check if the BTB entry is resolved, the calculated address matches and the outcome bit is 0
+    else if (cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address == target_address && cpu->BTB_array[btb_index].outcome_bit == 0  ){
         // Increment the outcome bit
-        cpu->BTB_array[btb_index].outcome_bit = change_btb_11(cpu->BTB_array[btb_index].outcome_bit);
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_2(cpu->BTB_array[btb_index].outcome_bit);
         
         cpu->pc = target_address;
 
@@ -2178,10 +2158,10 @@ void update_branch_BP_BNZ(APEX_CPU* cpu)
 
         cpu->fetch.has_insn = TRUE;
     }
-    // Check if the BTB entry is resolved, the calculated address doesn't match and the outcome bit is not 00
-    else if( cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit != 00 ){
+    // Check if the BTB entry is resolved, the calculated address doesn't match and the outcome bit is not 0
+    else if( cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit != 0 ){
         // Decrement the outcome bit
-        cpu->BTB_array[btb_index].outcome_bit = change_btb_00(cpu->BTB_array[btb_index].outcome_bit);
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_0(cpu->BTB_array[btb_index].outcome_bit);
         
         cpu->pc = target_address;
 
@@ -2192,27 +2172,14 @@ void update_branch_BP_BNZ(APEX_CPU* cpu)
 
         cpu->fetch.has_insn = TRUE;
     }
-    // Check if the BTB entry is resolved, the calculated address matches and the outcome bit is not 00
-    else if(cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address == target_address && cpu->BTB_array[btb_index].outcome_bit != 00) {
+    // Check if the BTB entry is resolved, the calculated address matches and the outcome bit is not 0
+    else if(cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address == target_address && cpu->BTB_array[btb_index].outcome_bit != 0) {
         // Increment the outcome bit
-        cpu->BTB_array[btb_index].outcome_bit = change_btb_11(cpu->BTB_array[btb_index].outcome_bit);
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_2(cpu->BTB_array[btb_index].outcome_bit);
     }
 }
 
-// case for  BZ BNP
-/* logic 
-Evaluate possible scenarios:
-If the instruction is a branch:
-1) If the entry is unresolved, flush it and mark as resolved.
-2) If the bits are 11 and the entry is incorrect, decrement and flush.
-   If the entry is correct, do nothing.
-3) If the bits are 01 or 00 and the entry is incorrect, decrement and flush.
-   If the entry is correct, flush and increment.
 
-If the instruction is not a branch:
-- If the bits are 11 and the entry is resolved, flush and adjust counters.
-- Otherwise, take no action.
-*/
 
 void update_branch_BZ_BNP(APEX_CPU* cpu){
     // Calculate the target address
@@ -2220,16 +2187,16 @@ void update_branch_BZ_BNP(APEX_CPU* cpu){
     // Search for the entry in the BTB
     int btb_index = search_entry_in_btb(cpu, cpu->execute.pc);
 
-    // Check if the BTB entry is unresolved or if it's resolved but the calculated address doesn't match and the outcome bit is 00
-    if (cpu->BTB_array[btb_index].completion_status == 0 || (cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit == 00)){
+    // Check if the BTB entry is unresolved or if it's resolved but the calculated address doesn't match and the outcome bit is 0
+    if (cpu->BTB_array[btb_index].completion_status == 0 || (cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit == 0)){
         // Update the BTB entry
         cpu->BTB_array[btb_index].completion_status = 1;
         cpu->BTB_array[btb_index].calc_target_address = target_address;
 
-        // cpu->BTB_array[btb_index].outcome_bit= 00;
-        // this is giving some error that i am not able to figure out... changibg this to 01 for now --- CHANGE THIS BACK :( ????????
+        // cpu->BTB_array[btb_index].outcome_bit= 0;
+        // this is giving some error that i am not able to figure out... changibg this to 1 for now --- CHANGE THIS BACK :( ????????
 
-        cpu->BTB_array[btb_index].outcome_bit= 01;
+        cpu->BTB_array[btb_index].outcome_bit= 1;
         cpu->pc = target_address;
 
         cpu->fetch_from_next_cycle = TRUE;
@@ -2238,10 +2205,10 @@ void update_branch_BZ_BNP(APEX_CPU* cpu){
 
         cpu->fetch.has_insn = TRUE;
     }
-    // Check if the BTB entry is resolved, the calculated address doesn't match and the outcome bit is 11
-    else if(cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit == 11  ){
+    // Check if the BTB entry is resolved, the calculated address doesn't match and the outcome bit is 2
+    else if(cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit == 2  ){
         // Decrement the outcome bit
-        cpu->BTB_array[btb_index].outcome_bit = change_btb_00(cpu->BTB_array[btb_index].outcome_bit);
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_0(cpu->BTB_array[btb_index].outcome_bit);
         cpu->pc = target_address;
         cpu->fetch_from_next_cycle = TRUE;
 
@@ -2249,10 +2216,10 @@ void update_branch_BZ_BNP(APEX_CPU* cpu){
 
         cpu->fetch.has_insn = TRUE; 
     }
-    // Check if the BTB entry is resolved, the calculated address doesn't match and the outcome bit is not 11
-    else if (cpu->BTB_array[btb_index].outcome_bit != 11 && cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].calc_target_address != target_address ){
+    // Check if the BTB entry is resolved, the calculated address doesn't match and the outcome bit is not 2
+    else if (cpu->BTB_array[btb_index].outcome_bit != 2 && cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].calc_target_address != target_address ){
         // Decrement the outcome bit
-        cpu->BTB_array[btb_index].outcome_bit = change_btb_00(cpu->BTB_array[btb_index].outcome_bit);
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_0(cpu->BTB_array[btb_index].outcome_bit);
         cpu->pc = target_address;
         cpu->fetch_from_next_cycle = TRUE;
 
@@ -2260,10 +2227,10 @@ void update_branch_BZ_BNP(APEX_CPU* cpu){
 
         cpu->fetch.has_insn = TRUE; 
     }
-    // Check if the BTB entry is resolved, the calculated address matches and the outcome bit is not 11
-    else if(cpu->BTB_array[btb_index].outcome_bit != 11 && cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].calc_target_address == target_address){
+    // Check if the BTB entry is resolved, the calculated address matches and the outcome bit is not 2
+    else if(cpu->BTB_array[btb_index].outcome_bit != 2 && cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].calc_target_address == target_address){
         // Increment the outcome bit
-        cpu->BTB_array[btb_index].outcome_bit = change_btb_11(cpu->BTB_array[btb_index].outcome_bit);
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_2(cpu->BTB_array[btb_index].outcome_bit);
         cpu->pc = target_address;
         cpu->fetch_from_next_cycle = TRUE;
 
