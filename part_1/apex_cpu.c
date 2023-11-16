@@ -307,7 +307,7 @@ APEX_fetch(APEX_CPU *cpu)
 
     // Search for the entry in the BTB
     // print btb_index, outcome_bit, calc_target_address
-    printf("BTB INDEX: %d\n", search_entry_in_btb(cpu, cpu->fetch.pc));
+    // printf("BTB INDEX: %d\n", search_entry_in_btb(cpu, cpu->fetch.pc));
    
 
             int btb_index = search_entry_in_btb(cpu, cpu->pc);
@@ -404,8 +404,57 @@ APEX_decode(APEX_CPU *cpu)
 
             case OPCODE_BP:
             {
+                 int btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                if (btb_index==-1)
+                {
+                    update_btb_entry(cpu, cpu->decode.pc,-1);
+                    btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                    // cpu->BTB_array[btb_index].outcome_bit = 0;
+                    cpu->BTB_array[btb_index].outcome_bit = 11;
+                    
+                    cpu->BTB_array[btb_index].completion_status = 0;
+                    // cpu->BTB_array[btb_index].calc_target_address = cpu->decode.pc + cpu->decode.imm;
+
+                }
+                break;
+                
+            }
+            
+            
+            case OPCODE_BNP:
+            {
+                int btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                if (btb_index==-1)
+                {
+                    update_btb_entry(cpu, cpu->decode.pc,-1);
+                    btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                    // cpu->BTB_array[btb_index].outcome_bit = 0;
+                    cpu->BTB_array[btb_index].outcome_bit = 00;
+                    
+                    cpu->BTB_array[btb_index].completion_status = 0;
+                    // cpu->BTB_array[btb_index].calc_target_address = cpu->decode.pc + cpu->decode.imm;
+
+                }
                 break;
             }
+            case OPCODE_BZ:
+            {
+                int btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                if (btb_index==-1)
+                {
+                    update_btb_entry(cpu, cpu->decode.pc,-1);
+                    btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                    // cpu->BTB_array[btb_index].outcome_bit = 0;
+                    cpu->BTB_array[btb_index].outcome_bit = 00;
+                    
+                    cpu->BTB_array[btb_index].completion_status = 0;
+                    // cpu->BTB_array[btb_index].calc_target_address = cpu->decode.pc + cpu->decode.imm;
+
+                }
+                break;
+                
+            }
+            
             
             case OPCODE_BN:
             {
@@ -415,17 +464,6 @@ APEX_decode(APEX_CPU *cpu)
             {
                 break;
             }
-            case OPCODE_BNP:
-            {
-                break;
-            }
-            case OPCODE_BZ:
-            {
-                break;
-            }
-            
-            
-
            
 
             case OPCODE_ADD:
@@ -853,12 +891,21 @@ APEX_execute(APEX_CPU *cpu)
             
             case OPCODE_BP:
             {
+                int btb_index = search_entry_in_btb(cpu, cpu->execute.pc);
+
                 //PRINT POS FLAG VALUE 
-                printf("------------------------------------");
-                printf("POS FLAG VALUE: %d\n", cpu->pos_flag);
+                // printf("------------------------------------");
+                // printf("POS FLAG VALUE: %d\n", cpu->pos_flag);
                 
+
                 if(cpu->pos_flag == 1)
                 {
+                    update_branch_BP_BNZ(cpu);
+                }
+
+                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 00)
+                {
+
                     /* Calculate new PC, and send it to fetch unit */
                     cpu->pc = cpu->execute.pc + cpu->execute.imm;
                     
@@ -877,7 +924,15 @@ APEX_execute(APEX_CPU *cpu)
             
             case OPCODE_BZ:
             {
+                int btb_index = search_entry_in_btb(cpu, cpu->execute.pc);
+
                 if (cpu->zero_flag == TRUE)
+                {
+
+                    update_branch_BZ_BNP(cpu);
+                }
+
+                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 11)
                 {
                     /* Calculate new PC, and send it to fetch unit */
                     cpu->pc = cpu->execute.pc + cpu->execute.imm;
@@ -930,8 +985,18 @@ APEX_execute(APEX_CPU *cpu)
 
             case OPCODE_BNP:
             {
+                int btb_index = search_entry_in_btb(cpu, cpu->execute.pc);
+
                 if(cpu->pos_flag == FALSE)
                 {
+                    update_branch_BZ_BNP(cpu);
+                }
+
+                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 11){
+
+                
+
+
                     /* Calculate new PC, and send it to fetch unit */
                     cpu->pc = cpu->execute.pc + cpu->execute.imm;
                     

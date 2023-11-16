@@ -13,6 +13,11 @@
 #include "apex_cpu.h"
 #include "apex_macros.h"
 
+CPU_Stage outputDisplay[5];
+
+char stages[5][20] = { "FETCH_ ","DECODE_RF_","EX_","MEMORY_","WRITEBACK_"};
+
+
 /* Converts the PC(4000 series) into array index for code memory
  *
  * Note: You are not supposed to edit this function
@@ -263,6 +268,7 @@ APEX_fetch(APEX_CPU *cpu)
             cpu->fetch_from_next_cycle = FALSE;
 
             /* Skip this cycle*/
+             outputDisplay[0].has_insn = 0; //fetch
             return;
         }
 
@@ -287,16 +293,62 @@ APEX_fetch(APEX_CPU *cpu)
         // /* Copy data from fetch latch to decode latch*/
         // cpu->decode = cpu->fetch;
 
+        // fetch code for BTB 
+        // 4 cases for BTB - 1. BTB miss, 2. BTB hit, 3. BTB miss and branch taken, 4. BTB hit and branch taken
+        // BTB will be used for - BNZ, BZ, BNP and BP
+        
+        // BNZ and BP will have the same implementation
+        // BZ and BNP will have the same implementation
+
+
+
+
+            if(cpu->fetch.opcode == OPCODE_BNZ || cpu->fetch.opcode == OPCODE_BZ || cpu->fetch.opcode == OPCODE_BNP || cpu->fetch.opcode == OPCODE_BP){
+
+    // Search for the entry in the BTB
+    // print btb_index, outcome_bit, calc_target_address
+    // printf("BTB INDEX: %d\n", search_entry_in_btb(cpu, cpu->fetch.pc));
+   
+
+            int btb_index = search_entry_in_btb(cpu, cpu->pc);
+            if(btb_index >= 0){
+                // Check if the opcode is BNZ or BP and the outcome bit is not 0
+                if( (cpu->fetch.opcode == OPCODE_BNZ || cpu->fetch.opcode == OPCODE_BP) && cpu->BTB_array[btb_index].outcome_bit != 0 ){
+                    cpu->pc = cpu->BTB_array[btb_index].calc_target_address;
+                }
+                // Check if the opcode is BZ or BNP and the outcome bit is 11
+                else if((cpu->fetch.opcode == OPCODE_BZ || cpu->fetch.opcode == OPCODE_BNP) && cpu->BTB_array[btb_index].outcome_bit == 11 ){
+                    cpu->pc = cpu->BTB_array[btb_index].calc_target_address;
+                }
+                else{
+                    cpu->pc += 4;
+                }
+                        }
+                                    
+            else{
+                // Add the entry in the BTB
+                // add_entry_in_BTB(cpu, cpu->pc);
+
+                cpu->pc += 4;
+            }
+        }
+        else{
+            cpu->pc += 4;
+        }
+        
+
+        
         if(!cpu->decode.stalling_value)
         {
-            cpu->pc += 4;
+            // cpu->pc += 4;
             cpu->decode = cpu->fetch;
         }
+
         else
         {
             cpu->fetch.stalling_value = 1;
         }
-        
+        outputDisplay[0] = cpu->fetch;
 
         if (ENABLE_DEBUG_MESSAGES)
         {
@@ -311,7 +363,11 @@ APEX_fetch(APEX_CPU *cpu)
             cpu->fetch.has_insn = FALSE;
         }
     }
+    // else{
+       outputDisplay[0] = cpu->fetch; //fetch
+    // }
 }
+
 
 /*
  * Decode Stage of APEX Pipeline
@@ -637,13 +693,83 @@ APEX_decode(APEX_CPU *cpu)
                 break;
             }
 
+            case OPCODE_BNZ:
+            {
+                int btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                if (btb_index==-1)
+                {
+                    update_btb_entry(cpu, cpu->decode.pc,-1);
+                    btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                    // cpu->BTB_array[btb_index].outcome_bit = 0;
+                    cpu->BTB_array[btb_index].outcome_bit = 11;
+                    
+                    cpu->BTB_array[btb_index].completion_status = 0;
+                    // cpu->BTB_array[btb_index].calc_target_address = cpu->decode.pc + cpu->decode.imm;
+
+                }
+                break;
+                
+            }
+
+            case OPCODE_BP:
+            {
+                 int btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                if (btb_index==-1)
+                {
+                    update_btb_entry(cpu, cpu->decode.pc,-1);
+                    btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                    // cpu->BTB_array[btb_index].outcome_bit = 0;
+                    cpu->BTB_array[btb_index].outcome_bit = 11;
+                    
+                    cpu->BTB_array[btb_index].completion_status = 0;
+                    // cpu->BTB_array[btb_index].calc_target_address = cpu->decode.pc + cpu->decode.imm;
+
+                }
+                break;
+                
+            }
+            
+            
+            case OPCODE_BNP:
+            {
+                int btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                if (btb_index==-1)
+                {
+                    update_btb_entry(cpu, cpu->decode.pc,-1);
+                    btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                    // cpu->BTB_array[btb_index].outcome_bit = 0;
+                    cpu->BTB_array[btb_index].outcome_bit = 00;
+                    
+                    cpu->BTB_array[btb_index].completion_status = 0;
+                    // cpu->BTB_array[btb_index].calc_target_address = cpu->decode.pc + cpu->decode.imm;
+
+                }
+                break;
+            }
+            case OPCODE_BZ:
+            {
+                int btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                if (btb_index==-1)
+                {
+                    update_btb_entry(cpu, cpu->decode.pc,-1);
+                    btb_index = search_entry_in_btb(cpu, cpu->decode.pc);
+                    // cpu->BTB_array[btb_index].outcome_bit = 0;
+                    cpu->BTB_array[btb_index].outcome_bit = 00;
+                    
+                    cpu->BTB_array[btb_index].completion_status = 0;
+                    // cpu->BTB_array[btb_index].calc_target_address = cpu->decode.pc + cpu->decode.imm;
+
+                }
+                break;
+                
+            }
             
 
 
 
 
         }
-
+      outputDisplay[1] = cpu->decode; //decode
         /* Copy data from decode latch to execute latch*/
         // only execute when the register is not busy
         
@@ -664,6 +790,9 @@ APEX_decode(APEX_CPU *cpu)
         {
             print_stage_content("Decode/RF", &cpu->decode);
         }
+    }
+    else{
+        outputDisplay[1] = cpu->decode; //decode
     }
 }
 
@@ -1077,9 +1206,51 @@ APEX_execute(APEX_CPU *cpu)
                 break;
             }
 
+
+            case OPCODE_BP:
+            {
+                int btb_index = search_entry_in_btb(cpu, cpu->execute.pc);
+
+                //PRINT POS FLAG VALUE 
+                // printf("------------------------------------");
+                // printf("POS FLAG VALUE: %d\n", cpu->pos_flag);
+                
+
+                if(cpu->pos_flag == 1)
+                {
+                    update_branch_BP_BNZ(cpu);
+                }
+
+                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 00)
+                {
+
+                    /* Calculate new PC, and send it to fetch unit */
+                    cpu->pc = cpu->execute.pc + cpu->execute.imm;
+                    
+                    /* Since we are using reverse callbacks for pipeline stages, 
+                     * this will prevent the new instruction from being fetched in the current cycle*/
+                    cpu->fetch_from_next_cycle = TRUE;
+
+                    /* Flush previous stages */
+                    cpu->decode.has_insn = FALSE;
+
+                    /* Make sure fetch stage is enabled to start fetching from new PC */
+                    cpu->fetch.has_insn = TRUE;
+                }
+                break;
+            }
+            
             case OPCODE_BZ:
             {
+                int btb_index = search_entry_in_btb(cpu, cpu->execute.pc);
+
                 if (cpu->zero_flag == TRUE)
+                {
+
+                    update_branch_BZ_BNP(cpu);
+                }
+
+                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 11)
                 {
                     /* Calculate new PC, and send it to fetch unit */
                     cpu->pc = cpu->execute.pc + cpu->execute.imm;
@@ -1098,32 +1269,24 @@ APEX_execute(APEX_CPU *cpu)
             }
 
             case OPCODE_BNZ:
+            
             {
-                if (cpu->zero_flag == FALSE)
+
+             int btb_index = search_entry_in_btb(cpu, cpu->execute.pc);
+                if(cpu->zero_flag ==0)
                 {
-                    /* Calculate new PC, and send it to fetch unit */
-                    cpu->pc = cpu->execute.pc + cpu->execute.imm;
-                    
-                    /* Since we are using reverse callbacks for pipeline stages, 
-                     * this will prevent the new instruction from being fetched in the current cycle*/
-                    cpu->fetch_from_next_cycle = TRUE;
-
-                    /* Flush previous stages */
-                    cpu->decode.has_insn = FALSE;
-
-                    /* Make sure fetch stage is enabled to start fetching from new PC */
-                    cpu->fetch.has_insn = TRUE;
+                    update_branch_BP_BNZ(cpu);
                 }
-                break;
-            }
 
 
-            case OPCODE_BP:
-            {
-                if(cpu->pos_flag == TRUE)
+                //   or flush
+            // else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 11)
+            
+            else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit != 00)
                 {
                     /* Calculate new PC, and send it to fetch unit */
-                    cpu->pc = cpu->execute.pc + cpu->execute.imm;
+                    cpu->pc = cpu->execute.pc +4;
+                    // cpu->pc = cpu->execute.pc + cpu->execute.imm;
                     
                     /* Since we are using reverse callbacks for pipeline stages, 
                      * this will prevent the new instruction from being fetched in the current cycle*/
@@ -1140,8 +1303,18 @@ APEX_execute(APEX_CPU *cpu)
 
             case OPCODE_BNP:
             {
+                int btb_index = search_entry_in_btb(cpu, cpu->execute.pc);
+
                 if(cpu->pos_flag == FALSE)
                 {
+                    update_branch_BZ_BNP(cpu);
+                }
+
+                else if( cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].outcome_bit == 11){
+
+                
+
+
                     /* Calculate new PC, and send it to fetch unit */
                     cpu->pc = cpu->execute.pc + cpu->execute.imm;
                     
@@ -1285,6 +1458,7 @@ APEX_execute(APEX_CPU *cpu)
         
 
         }
+         outputDisplay[2] = cpu->execute;
 
         /* Copy data from execute latch to memory latch*/
         cpu->memory = cpu->execute;
@@ -1294,6 +1468,9 @@ APEX_execute(APEX_CPU *cpu)
         {
             print_stage_content("Execute", &cpu->execute);
         }
+    }
+     else{
+        outputDisplay[2] = cpu->execute;
     }
 }
 
@@ -1343,7 +1520,7 @@ APEX_memory(APEX_CPU *cpu)
                 break;
             }
         }
-
+ outputDisplay[3] = cpu->memory;
         /* Copy data from memory latch to writeback latch*/
         cpu->writeback = cpu->memory;
         cpu->memory.has_insn = FALSE;
@@ -1352,6 +1529,8 @@ APEX_memory(APEX_CPU *cpu)
         {
             print_stage_content("Memory", &cpu->memory);
         }
+    } else{
+        outputDisplay[3] = cpu->memory;
     }
 }
 
@@ -1599,7 +1778,7 @@ APEX_writeback(APEX_CPU *cpu)
 
 
         }
-
+outputDisplay[4] = cpu->writeback;
         cpu->insn_completed++;
         cpu->writeback.has_insn = FALSE;
 
@@ -1613,6 +1792,9 @@ APEX_writeback(APEX_CPU *cpu)
             /* Stop the APEX simulator */
             return TRUE;
         }
+    }
+else{
+        outputDisplay[4] = cpu->writeback;
     }
 
     /* Default */
@@ -1745,4 +1927,348 @@ APEX_cpu_stop(APEX_CPU *cpu)
 {
     free(cpu->code_memory);
     free(cpu);
+}
+void displaySequence()
+{ printf("\n");
+    for(int i = 0; i < 5; i++)
+    {
+        if(outputDisplay[i].has_insn){
+            printf("\n");
+            printf("%d.  %-15s--->: (l%d: %d) ",i+1, stages[i], (outputDisplay[i].rd>0 ? outputDisplay[i].rd:0),outputDisplay[i].pc);
+            print_instruction(&outputDisplay[i]);
+            printf("\n");
+        } else{
+            printf("%d.   %-15s--->:   NA \n",i+1, stages[i]);
+        }
+    }
+}
+
+
+void Registers_state(APEX_CPU* cpu) {
+  printf("\n== STATE REGISTER FILE ====\n");
+  for(int i = 0; i < REG_FILE_SIZE; ++i) 
+  {
+    printf("|\tREG[%d]\t|\tValue = %d\t|\tStatus = %s\t|\n", i, cpu->regs[i], (cpu->flags_for_regs[i] ? "INVALID" : "VALID"));
+  }
+}
+
+void State_data_memory(APEX_CPU* cpu) {
+  printf("\n=TATE OF DATA MEMORY ==\n");
+  int index;
+  for(index = 0; index < 100; ++index) {
+    printf("|\tMEM[%d]\t|\tData Value = %d\t|\n", index, cpu->data_memory[index]);
+  }
+}
+
+
+void APEX_cpu_simulate(APEX_CPU *cpu, int cycles,const char *filename)
+{
+
+    while (cycles != 0)
+    {
+        if (ENABLE_DEBUG_MESSAGES)
+        {
+            printf("---Clock Cycle #:%d------\n", cpu->clock+1);
+        }
+
+        if (APEX_writeback(cpu))
+        {
+            /* Halt in writeback stage */
+            printf("APEX_CPU: Simulation Complete, cycles = %d instructions = %d\n", cpu->clock+1, cpu->insn_completed);
+            break;
+        }
+
+        APEX_memory(cpu);
+        APEX_execute(cpu);
+        APEX_decode(cpu);
+        APEX_fetch(cpu);
+        
+        displaySequence();
+
+        cpu->clock++;
+        cycles -= 1;
+    }
+    if(strcmp(filename, "simulate") == 0){
+        APEX_cpu_run(cpu);
+    }
+    Registers_state(cpu);
+    State_data_memory(cpu);
+}
+
+
+
+
+
+//HELPER FUNCTIONS FOR BTB
+
+// search for the branch in the BTB to check for entry in BTB
+// search_entry_in_btb - inputs apex cpu, instruction address
+
+int search_entry_in_btb(APEX_CPU *cpu, int instruction_addr)
+{
+    // printf("search_entry_in_btb\n");
+
+    for (int i = 0; i < BTB_adding_4_buffer; i++)
+    {
+        if (cpu->BTB_array[i].address == instruction_addr)
+        {
+            // printf("search_entry_in_btb - found entry in BTB\n");
+            return i;
+        }
+    }
+    //printing for testing 
+    printf("search_entry_in_btb - entry not found in BTB\n");
+    return -1;
+}
+
+// initialize_btb - inputs apex cpu
+void initialize_btb(APEX_CPU *cpu)
+{
+    // printf("initialize_btb test AAAAAAAAAAAAAAAAAAAAAAAAA \n");
+    for (int i = 0; i < BTB_adding_4_buffer; i++)
+    {
+
+        cpu->BTB_array[i].outcome_bit=0;
+        cpu->BTB_array[i].completion_status=0;
+        cpu->BTB_array[i].branch_taken=0;
+        // cpu->BTB_array[i].address = -1;
+        // cpu->BTB_array[i].calc_target_address = -1;
+        // cpu->BTB_array[i].prediction = -1;
+        // cpu->BTB_array[i].valid = 0;
+    }
+}
+
+
+// update_btb_entry - inputs apex cpu, instruction address, calc target address
+// void update_btb_entry(APEX_CPU *cpu, int instruction_addr, int calc_target_address)
+// {
+//     // printf("update_btb_entry\n");
+//     int index = search_entry_in_btb(cpu, instruction_addr);
+//     if (index != -1)
+//     {
+//         // printf("update_btb_entry - updating entry in BTB\n");
+//         cpu->BTB_array[index].address = instruction_addr;
+//         cpu->BTB_array[index].calc_target_address = calc_target_address;
+//         cpu->BTB_array[index].prediction = 1;
+//         cpu->BTB_array[index].valid = 1;
+//     }
+//     else
+//     {
+//         // printf("update_btb_entry - adding entry in BTB\n");
+//         for (int i = 0; i < BTB_adding_4_buffer; i++)
+//         {
+//             if (cpu->BTB_array[i].valid == 0)
+//             {
+//                 cpu->BTB_array[i].address = instruction_addr;
+//                 cpu->BTB_array[i].calc_target_address = calc_target_address;
+//                 cpu->BTB_array[i].prediction = 1;
+//                 cpu->BTB_array[i].valid = 1;
+//                 break;
+//             }
+//         }
+//     }
+// }
+
+
+
+// update_btb_entry - inputs apex cpu, instruction address, calc target address
+void update_btb_entry(APEX_CPU *cpu, int instruction_addr, int calc_target_address)
+{
+    // printf("update_btb_entry AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA \n");
+    cpu->BTB_array[cpu->head_of_BTB].address = instruction_addr;
+    cpu->BTB_array[cpu->head_of_BTB].calc_target_address = calc_target_address;
+    // cpu->BTB_array[cpu->head_of_BTB].prediction = 1;
+    cpu->BTB_array[cpu->head_of_BTB].completion_status = 0  ;
+    cpu->BTB_array[cpu->head_of_BTB].branch_taken = 0;
+
+    //adddng entry to BTB 
+
+    cpu->head_of_BTB = (cpu->head_of_BTB + 1) % BTB_adding_4_buffer;
+
+    // printf("update_btb_entry - adding entry in BTB\n");
+    // uhhhhhhhhhhhhhh moving to the next entry in BTB somehow?????
+
+}
+
+
+// increment/change btb entry to 11 
+int change_btb_11(int current_bits)
+{
+    if(current_bits == 0){
+        return 1;
+    }
+    // for the rest of the cases change it to 11
+
+    return 11;
+}
+
+// increment/change btb entry to 00
+int change_btb_00(int current_bits)
+{
+    if(current_bits == 11){
+        return 01;
+    }
+    // for the rest of the cases change it to 00
+    //printf("change_btb_00 - changing to 00\n");
+    //printf("reached change btbt 00\n");
+    // return 00;
+    return 0;
+
+}
+
+// code for BP_BNZ
+
+//logic 
+/*
+
+possible scenarios:- from updated P2 pdf - using Mintify (commenting ai)
+
+If the instruction is a branch:
+
+1) If the entry is unresolved, flush it and mark as resolved.
+2) If the bits are 00 and the entry is incorrect, reinitialize the entry.
+
+   If the entry is correct, increment the bits and flush.
+
+3) If the bits are 01 or 11 and the entry is incorrect, decrement and flush.
+   If the entry is correct, increment.
+
+If the instruction is not a branch:
+- If the bits are 11 or 01 and the entry is resolved, flush and adjust counters.
+- Otherwise, take no action.
+
+*/
+
+void update_branch_BP_BNZ(APEX_CPU* cpu)
+{
+    // Calculate the target address
+    int target_address = cpu->execute.pc + cpu->execute.imm;
+    // Search for the entry in the BTB
+    int btb_index = search_entry_in_btb(cpu, cpu->execute.pc);
+
+    // Check if the BTB entry is unresolved or if it's resolved but the calculated address doesn't match and the outcome bit is 00
+    if (cpu->BTB_array[btb_index].completion_status == 0 || (cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit == 00)){
+        // Update the BTB entry
+        cpu->BTB_array[btb_index].completion_status = 1;
+        cpu->BTB_array[btb_index].calc_target_address = target_address;
+        cpu->BTB_array[btb_index].outcome_bit = 11;
+
+        // cpu->BTB_array[btb_index].outcome_bit = change_btb_11(cpu->BTB_array[btb_index].outcome_bit);
+
+        cpu->pc = target_address;
+
+        // this will remain the same for all the cases
+        cpu->fetch_from_next_cycle = TRUE;
+
+        cpu->decode.has_insn = FALSE;
+
+        cpu->fetch.has_insn = TRUE;
+    }
+    // Check if the BTB entry is resolved, the calculated address matches and the outcome bit is 00
+    else if (cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address == target_address && cpu->BTB_array[btb_index].outcome_bit == 00  ){
+        // Increment the outcome bit
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_11(cpu->BTB_array[btb_index].outcome_bit);
+        
+        cpu->pc = target_address;
+
+        // this will remain the same for all the cases
+        cpu->fetch_from_next_cycle = TRUE;
+
+        cpu->decode.has_insn = FALSE;
+
+        cpu->fetch.has_insn = TRUE;
+    }
+    // Check if the BTB entry is resolved, the calculated address doesn't match and the outcome bit is not 00
+    else if( cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit != 00 ){
+        // Decrement the outcome bit
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_00(cpu->BTB_array[btb_index].outcome_bit);
+        
+        cpu->pc = target_address;
+
+        // this will remain the same for all the cases
+        cpu->fetch_from_next_cycle = TRUE;
+
+        cpu->decode.has_insn = FALSE;
+
+        cpu->fetch.has_insn = TRUE;
+    }
+    // Check if the BTB entry is resolved, the calculated address matches and the outcome bit is not 00
+    else if(cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address == target_address && cpu->BTB_array[btb_index].outcome_bit != 00) {
+        // Increment the outcome bit
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_11(cpu->BTB_array[btb_index].outcome_bit);
+    }
+}
+
+// case for  BZ BNP
+/* logic 
+Evaluate possible scenarios:
+If the instruction is a branch:
+1) If the entry is unresolved, flush it and mark as resolved.
+2) If the bits are 11 and the entry is incorrect, decrement and flush.
+   If the entry is correct, do nothing.
+3) If the bits are 01 or 00 and the entry is incorrect, decrement and flush.
+   If the entry is correct, flush and increment.
+
+If the instruction is not a branch:
+- If the bits are 11 and the entry is resolved, flush and adjust counters.
+- Otherwise, take no action.
+*/
+
+void update_branch_BZ_BNP(APEX_CPU* cpu){
+    // Calculate the target address
+    int target_address = cpu->execute.pc + cpu->execute.imm;
+    // Search for the entry in the BTB
+    int btb_index = search_entry_in_btb(cpu, cpu->execute.pc);
+
+    // Check if the BTB entry is unresolved or if it's resolved but the calculated address doesn't match and the outcome bit is 00
+    if (cpu->BTB_array[btb_index].completion_status == 0 || (cpu->BTB_array[btb_index].completion_status == 1  && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit == 00)){
+        // Update the BTB entry
+        cpu->BTB_array[btb_index].completion_status = 1;
+        cpu->BTB_array[btb_index].calc_target_address = target_address;
+
+        // cpu->BTB_array[btb_index].outcome_bit= 00;
+        // this is giving some error that i am not able to figure out... changibg this to 01 for now --- CHANGE THIS BACK :( ????????
+
+        cpu->BTB_array[btb_index].outcome_bit= 01;
+        cpu->pc = target_address;
+
+        cpu->fetch_from_next_cycle = TRUE;
+
+        cpu->decode.has_insn = FALSE;
+
+        cpu->fetch.has_insn = TRUE;
+    }
+    // Check if the BTB entry is resolved, the calculated address doesn't match and the outcome bit is 11
+    else if(cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].calc_target_address != target_address && cpu->BTB_array[btb_index].outcome_bit == 11  ){
+        // Decrement the outcome bit
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_00(cpu->BTB_array[btb_index].outcome_bit);
+        cpu->pc = target_address;
+        cpu->fetch_from_next_cycle = TRUE;
+
+        cpu->decode.has_insn = FALSE;
+
+        cpu->fetch.has_insn = TRUE; 
+    }
+    // Check if the BTB entry is resolved, the calculated address doesn't match and the outcome bit is not 11
+    else if (cpu->BTB_array[btb_index].outcome_bit != 11 && cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].calc_target_address != target_address ){
+        // Decrement the outcome bit
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_00(cpu->BTB_array[btb_index].outcome_bit);
+        cpu->pc = target_address;
+        cpu->fetch_from_next_cycle = TRUE;
+
+        cpu->decode.has_insn = FALSE;
+
+        cpu->fetch.has_insn = TRUE; 
+    }
+    // Check if the BTB entry is resolved, the calculated address matches and the outcome bit is not 11
+    else if(cpu->BTB_array[btb_index].outcome_bit != 11 && cpu->BTB_array[btb_index].completion_status == 1 && cpu->BTB_array[btb_index].calc_target_address == target_address){
+        // Increment the outcome bit
+        cpu->BTB_array[btb_index].outcome_bit = change_btb_11(cpu->BTB_array[btb_index].outcome_bit);
+        cpu->pc = target_address;
+        cpu->fetch_from_next_cycle = TRUE;
+
+        cpu->decode.has_insn = FALSE;
+
+        cpu->fetch.has_insn = TRUE; 
+    }
 }
