@@ -11,6 +11,32 @@
 
 #include "apex_macros.h"
 
+// added for BTB
+#define BTB_adding_4_buffer 4
+
+
+// adding struct for BTB entry 
+typedef struct BTB_entry
+{
+    // will need - address , calculated target address , valid bit , outcome bit, completion status - 
+    int address;
+    int calc_target_address;
+    int valid_bit;
+    int outcome_bit;
+    int completion_status;
+      // prediction bit?? - didnt end up using this
+    // int prediction_bit;
+
+    // to check if the branch is taken or not 
+    int branch_taken;
+
+} BTB_entry;
+
+  
+
+
+
+
 /* Format of an APEX instruction  */
 typedef struct APEX_Instruction
 {
@@ -42,6 +68,7 @@ typedef struct CPU_Stage
     int buff_temp;
 
     int stalling_value; //added for stalling
+
 } CPU_Stage;
 
 /* Model of APEX CPU */
@@ -77,6 +104,13 @@ typedef struct APEX_CPU
     CPU_Stage execute;
     CPU_Stage memory;
     CPU_Stage writeback;
+
+    // for BTB - head and array for BTB entries which will include BTB size for each entry
+
+    // int BTB_size;
+    // BTB_entry *BTB_array;
+    int head_of_BTB;
+    BTB_entry BTB_array[BTB_adding_4_buffer];
 } APEX_CPU;
 
 APEX_Instruction *create_code_memory(const char *filename, int *size);
@@ -84,4 +118,19 @@ APEX_CPU *APEX_cpu_init(const char *filename);
 void APEX_cpu_run(APEX_CPU *cpu);
 void APEX_cpu_stop(APEX_CPU *cpu);
 void APEX_cpu_simulate(APEX_CPU *cpu, int cycles,const char *filename);
+
+//btb functions
+// int search_entry_in_BTB(APEX_CPU *cpu, int pc);
+
+int search_entry_in_btb(APEX_CPU *cpu, int instruction_addr);
+void initialize_btb(APEX_CPU *cpu);
+
+int change_btb_11(int current_bits);
+int change_btb_00(int current_bits);
+
+void update_branch_BP_BNZ(APEX_CPU* cpu);
+void update_branch_BZ_BNP(APEX_CPU* cpu);
+
+void update_btb_entry(APEX_CPU *cpu, int instruction_addr, int calc_target_address);
+
 #endif
