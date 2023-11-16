@@ -25,7 +25,7 @@ typedef struct BTB_entry
     int outcome_bit;
     int completion_status;
       // prediction bit?? - didnt end up using this
-    // int prediction_bit;
+    int prediction_bit;
 
     // to check if the branch is taken or not 
     int branch_taken;

@@ -311,13 +311,31 @@ APEX_fetch(APEX_CPU *cpu)
    
 
             int btb_index = search_entry_in_btb(cpu, cpu->pc);
+
+            int btb_index_2 = search_entry_in_btb(cpu, cpu->pc + 4);
+            
+
             if(btb_index >= 0){
                 // Check if the opcode is BNZ or BP and the outcome bit is not 0
                 if( (cpu->fetch.opcode == OPCODE_BNZ || cpu->fetch.opcode == OPCODE_BP) && cpu->BTB_array[btb_index].outcome_bit != 0 ){
+                    // cpu->pc = + cpu->fetch.imm;
                     cpu->pc = cpu->BTB_array[btb_index].calc_target_address;
+                    // btb_index_2 = search_entry_in_btb(cpu, cpu->pc);
+                    // btb_index_2 = try1_updating_btb_entry(cpu, cpu->pc, btb_index_2);
+                    //add 4 to the pc
+                    btb_index_2 = cpu->BTB_array[btb_index].prediction_bit;
                 }
                 // Check if the opcode is BZ or BNP and the outcome bit is 2
                 else if((cpu->fetch.opcode == OPCODE_BZ || cpu->fetch.opcode == OPCODE_BNP) && cpu->BTB_array[btb_index].outcome_bit == 2 ){
+                    btb_index_2 = cpu->BTB_array[btb_index].prediction_bit;
+                    btb_index_2 = search_entry_in_btb(cpu, cpu->pc);
+                    // Add the entry in the BTB
+                // add_entry_in_BTB(cpu, cpu->pc);
+
+                if(btb_index_2>=0){
+                    cpu->pc = cpu->BTB_array[btb_index_2].calc_target_address;
+                }
+                cpu->pc += 4;
                     cpu->pc = cpu->BTB_array[btb_index].calc_target_address;
                 }
                 else{
