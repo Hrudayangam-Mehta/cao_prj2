@@ -128,9 +128,15 @@ void initialize_btb(APEX_CPU *cpu);
 int change_btb_2(int current_bits);
 int change_btb_0(int current_bits);
 
+void try1_updating_btb_entry(APEX_CPU *cpu, int instruction_addr, int calc_target_address);
+void branching_for_BP_BNZ(APEX_CPU *cpu, int instruction_addr, int calc_target_address);
+
+
 void update_branch_BP_BNZ(APEX_CPU* cpu);
 void update_branch_BZ_BNP(APEX_CPU* cpu);
 
 void update_btb_entry(APEX_CPU *cpu, int instruction_addr, int calc_target_address);
+
+
 
 #endif

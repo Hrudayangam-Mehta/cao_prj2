@@ -2054,34 +2054,33 @@ void initialize_btb(APEX_CPU *cpu)
 
 
 // update_btb_entry - inputs apex cpu, instruction address, calc target address
-// void update_btb_entry(APEX_CPU *cpu, int instruction_addr, int calc_target_address)
-// {
-//     // printf("update_btb_entry\n");
-//     int index = search_entry_in_btb(cpu, instruction_addr);
-//     if (index != -1)
-//     {
-//         // printf("update_btb_entry - updating entry in BTB\n");
-//         cpu->BTB_array[index].address = instruction_addr;
-//         cpu->BTB_array[index].calc_target_address = calc_target_address;
-//         cpu->BTB_array[index].prediction = 1;
-//         cpu->BTB_array[index].valid = 1;
-//     }
-//     else
-//     {
-//         // printf("update_btb_entry - adding entry in BTB\n");
-//         for (int i = 0; i < BTB_adding_4_buffer; i++)
-//         {
-//             if (cpu->BTB_array[i].valid == 0)
-//             {
-//                 cpu->BTB_array[i].address = instruction_addr;
-//                 cpu->BTB_array[i].calc_target_address = calc_target_address;
-//                 cpu->BTB_array[i].prediction = 1;
-//                 cpu->BTB_array[i].valid = 1;
-//                 break;
-//             }
-//         }
-//     }
-// }
+void try1_updating_btb_entry(APEX_CPU *cpu, int instruction_addr, int calc_target_address)
+{
+    // printf("update_btb_entry\n");
+    int index = search_entry_in_btb(cpu, instruction_addr);
+    if (index != -1)
+    {
+        // printf("update_btb_entry - updating entry in BTB\n");
+        cpu->BTB_array[index].address = instruction_addr;
+        cpu->BTB_array[index].calc_target_address = calc_target_address;
+
+    }
+    else
+    {
+        // printf("update_btb_entry - adding entry in BTB\n");
+        for (int i = 0; i < BTB_adding_4_buffer; i++)
+        {
+            if (cpu->BTB_array[i].outcome_bit == 0)
+            {
+                cpu->BTB_array[i].address = instruction_addr;
+                cpu->BTB_array[i].calc_target_address = calc_target_address;
+                cpu->BTB_array[i].outcome_bit = 1;
+                cpu->BTB_array[i].valid_bit= 1;
+                break;
+            }
+        }
+    }
+}
 
 
 
@@ -2167,34 +2166,34 @@ all the rest cases - nahi samaj aaraha cause infinite loop pred mein atak raha h
 
 // update_branch_BP_BNZ - inputs apex cpu, instruction address, calc target address
 
-// void update_branch_BP_BNZ(APEX_CPU *cpu, int instruction_addr, int calc_target_address)
-// {
-//     // printf("update_branch_BP_BNZ\n");
-//     int index = search_entry_in_btb(cpu, instruction_addr);
-//     if (index != -1)
-//     {
-//         // printf("update_branch_BP_BNZ - updating entry in BTB\n");
-//         cpu->BTB_array[index].address = instruction_addr;
-//         cpu->BTB_array[index].calc_target_address = calc_target_address;
-//         cpu->BTB_array[index].prediction = 1;
-//         cpu->BTB_array[index].valid = 1;
-//     }
-//     else
-//     {
-//         // printf("update_branch_BP_BNZ - adding entry in BTB\n");
-//         for (int i = 0; i < BTB_adding_4_buffer; i++)
-//         {
-//             if (cpu->BTB_array[i].valid == 0)
-//             {
-//                 cpu->BTB_array[i].address = instruction_addr;
-//                 cpu->BTB_array[i].calc_target_address = calc_target_address;
-//                 cpu->BTB_array[i].prediction = 1;
-//                 cpu->BTB_array[i].valid = 1;
-//                 break;
-//             }
-//         }
-//     }
-// }
+void branching_for_BP_BNZ(APEX_CPU *cpu, int instruction_addr, int calc_target_address)
+{
+    // printf("update_branch_BP_BNZ\n");
+    int index = search_entry_in_btb(cpu, instruction_addr);
+    if (index != -1)
+    {
+        // printf("update_branch_BP_BNZ - updating entry in BTB\n");
+        cpu->BTB_array[index].address = instruction_addr;
+        cpu->BTB_array[index].calc_target_address = calc_target_address;
+        // cpu->BTB_array[index].prediction = 1;
+        // cpu->BTB_array[index].valid = 1;
+    }
+    else
+    {
+        // printf("update_branch_BP_BNZ - adding entry in BTB\n");
+        for (int i = 0; i < BTB_adding_4_buffer; i++)
+        {
+            if (cpu->BTB_array[i].valid_bit == 0)
+            {
+                cpu->BTB_array[i].address = instruction_addr;
+                cpu->BTB_array[i].calc_target_address = calc_target_address;
+                // cpu->BTB_array[i].prediction = 1;
+                // cpu->BTB_array[i].valid = 1;
+                break;
+            }
+        }
+    }
+}
 
 
 
